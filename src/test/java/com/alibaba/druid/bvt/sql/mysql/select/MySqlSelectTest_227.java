@@ -26,7 +26,7 @@ public class MySqlSelectTest_227 extends MysqlTest {
 
         Exception error = null;
         try {
-            SQLUtils.parseSingleMysqlStatement(sql);
+            SQLUtils.parseStatements(sql, "mysql");
         } catch (Exception ex) {
             error = ex;
         }

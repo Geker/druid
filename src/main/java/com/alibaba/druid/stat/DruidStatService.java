@@ -41,14 +41,14 @@ import com.alibaba.druid.util.StringUtils;
 
 /**
  * 注意：避免直接调用Druid相关对象例如DruidDataSource等，相关调用要到DruidStatManagerFacade里用反射实现
- * 
+ *
  * @author sandzhang[sandzhangtoo@gmail.com]
  */
 public final class DruidStatService implements DruidStatServiceMBean {
 
     private final static Log              LOG                    = LogFactory.getLog(DruidStatService.class);
 
-    public final static String            MBEAN_NAME             = "com.alibaba.druid:type=DruidStatService";
+    public final static String MBEAN_NAME = "com.alibaba.druid:type=DruidStatService";
 
     private final static DruidStatService instance               = new DruidStatService();
 
@@ -79,6 +79,7 @@ public final class DruidStatService implements DruidStatServiceMBean {
         statManagerFacade.setResetEnable(value);
     }
 
+    @Override
     public String service(String url) {
 
         Map<String, String> parameters = getParameters(url);
@@ -292,7 +293,7 @@ public final class DruidStatService implements DruidStatServiceMBean {
                 List<Map<String, Object>> sortedArray = comparatorOrderBy(tables, parameters);
                 result.put("tables", sortedArray);
             }
-            
+
             List<Map<String, Object>> functions = (List<Map<String, Object>>) result.get("functions");
             if (functions != null) {
                 List<Map<String, Object>> sortedArray = comparatorOrderBy(functions, parameters);
@@ -357,8 +358,9 @@ public final class DruidStatService implements DruidStatServiceMBean {
     public static void registerMBean() {
         MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
         try {
-
-            ObjectName objectName = new ObjectName(MBEAN_NAME);
+            int id = System.identityHashCode(instance.getClass());
+            ObjectName objectName = new ObjectName(MBEAN_NAME + ",id=" + id);
+            // ObjectName objectName = new ObjectName(MBEAN_NAME);
             if (!mbeanServer.isRegistered(objectName)) {
                 mbeanServer.registerMBean(instance, objectName);
             }
@@ -369,9 +371,10 @@ public final class DruidStatService implements DruidStatServiceMBean {
 
     public static void unregisterMBean() {
         MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
-
         try {
-            mbeanServer.unregisterMBean(new ObjectName(MBEAN_NAME));
+            int id = System.identityHashCode(instance.getClass());
+            ObjectName objectName = new ObjectName(MBEAN_NAME + ",id=" + id);
+            mbeanServer.unregisterMBean(objectName);
         } catch (JMException ex) {
             LOG.error("unregister mbean error", ex);
         }
