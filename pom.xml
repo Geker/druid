@@ -1,10 +1,9 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.alibaba</groupId>
 	<artifactId>druid</artifactId>
-	<version>1.1.14.fix-SNAPSHOT</version>
+	<version>1.1.16.fix-SNAPSHOT</version>
 
 	<packaging>jar</packaging>
 	<name>druid</name>
@@ -30,30 +29,6 @@
 			<url>file://${basedir}/lib/</url>
 			<layout>default</layout>
 		</repository>
-
-		<repository>
-			<id>private</id>
-			<name>private</name>
-			<url>http://10.60.80.54:30000/nexus/content/groups/private/</url>
-			<releases>
-				<enabled>true</enabled>
-			</releases>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
-		</repository>
-		<repository>
-			<id>public</id>
-			<name>public</name>
-			<url>http://10.60.80.54:30000/nexus/content/groups/public/</url>
-			<releases>
-				<enabled>true</enabled>
-			</releases>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
-		</repository>
-
 	</repositories>
 
 	<developers>
@@ -98,13 +73,13 @@
 		<url>http://code.alibabatech.com/jira/browse/DRUID</url>
 	</issueManagement>
 	<build>
-		<!-- <extensions> -->
-		<!-- <extension> -->
-		<!-- <groupId>org.apache.maven.wagon</groupId> -->
-		<!-- <artifactId>wagon-webdav</artifactId> -->
-		<!-- <version>1.0-beta-2</version> -->
-		<!-- </extension> -->
-		<!-- </extensions> -->
+		<extensions>
+			<extension>
+				<groupId>org.apache.maven.wagon</groupId>
+				<artifactId>wagon-webdav</artifactId>
+				<version>1.0-beta-2</version>
+			</extension>
+		</extensions>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -145,79 +120,79 @@
 				</configuration>
 			</plugin>
 
-			<!-- <plugin> -->
-			<!-- <artifactId>maven-javadoc-plugin</artifactId> -->
-			<!-- <version>3.0.1</version> -->
-			<!-- <executions> -->
-			<!-- <execution> -->
-			<!-- <id>attach-javadoc</id> -->
-			<!-- <goals> -->
-			<!-- <goal>jar</goal> -->
-			<!-- </goals> -->
-			<!-- </execution> -->
-			<!-- </executions> -->
-			<!-- <configuration> -->
-			<!-- <skip>${javadoc.skip}</skip> -->
-			<!-- <show>public</show> -->
-			<!-- <charset>UTF-8</charset> -->
-			<!-- <encoding>UTF-8</encoding> -->
-			<!-- <docencoding>UTF-8</docencoding> -->
-			<!-- <links> -->
-			<!-- <link>http://docs.oracle.com/javase/6/docs/api</link> -->
-			<!-- </links> -->
-			<!-- </configuration> -->
-			<!-- </plugin> -->
+			<plugin>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>3.0.1</version>
+				<executions>
+					<execution>
+						<id>attach-javadoc</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<skip>${javadoc.skip}</skip>
+					<show>public</show>
+					<charset>UTF-8</charset>
+					<encoding>UTF-8</encoding>
+					<docencoding>UTF-8</docencoding>
+					<links>
+						<link>http://docs.oracle.com/javase/6/docs/api</link>
+					</links>
+				</configuration>
+			</plugin>
 
-			<!-- <plugin> -->
-			<!-- <artifactId>maven-gpg-plugin</artifactId> -->
-			<!-- <version>1.6</version> -->
-			<!-- <configuration> -->
-			<!-- <skip>${gpg.skip}</skip> -->
-			<!-- </configuration> -->
-			<!-- <executions> -->
-			<!-- <execution> -->
-			<!-- <id>sign-artifacts</id> -->
-			<!-- <phase>verify</phase> -->
-			<!-- <goals> -->
-			<!-- <goal>sign</goal> -->
-			<!-- </goals> -->
-			<!-- </execution> -->
-			<!-- </executions> -->
-			<!-- </plugin> -->
+			<plugin>
+				<artifactId>maven-gpg-plugin</artifactId>
+				<version>1.6</version>
+				<configuration>
+					<skip>${gpg.skip}</skip>
+				</configuration>
+				<executions>
+					<execution>
+						<id>sign-artifacts</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>sign</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 
 			<!-- http://code.google.com/p/maven-license-plugin/wiki/HowTo -->
-			<!-- <plugin> -->
-			<!-- Working with multi-module projects -->
-			<!-- <inherited>false</inherited> -->
-			<!-- <groupId>com.mycila.maven-license-plugin</groupId> -->
-			<!-- <artifactId>maven-license-plugin</artifactId> -->
-			<!-- <version>1.10.b1</version> -->
-			<!-- <configuration> -->
-			<!-- <header>${basedir}/doc/license.txt</header> -->
-			<!-- <failIfMissing>true</failIfMissing> -->
-			<!-- <aggregate>true</aggregate> -->
-			<!-- <strictCheck>true</strictCheck> -->
-			<!-- <properties> -->
-			<!-- <year>2012</year> -->
-			<!-- </properties> -->
-			<!-- <mapping> -->
-			<!-- <java>SLASHSTAR_STYLE</java> -->
-			<!-- </mapping> -->
-			<!-- <includes> -->
-			<!-- <include>src/main/java/**/*.java</include> -->
-			<!-- </includes> -->
-			<!-- <encoding>UTF-8</encoding> -->
-			<!-- </configuration> -->
-			<!-- <executions> -->
-			<!-- <execution> -->
-			<!-- <id>check-headers</id> -->
-			<!-- <phase>verify</phase> -->
-			<!-- <goals> -->
-			<!-- <goal>check</goal> -->
-			<!-- </goals> -->
-			<!-- </execution> -->
-			<!-- </executions> -->
-			<!-- </plugin> -->
+			<plugin>
+				<!-- Working with multi-module projects -->
+				<inherited>false</inherited>
+				<groupId>com.mycila.maven-license-plugin</groupId>
+				<artifactId>maven-license-plugin</artifactId>
+				<version>1.10.b1</version>
+				<configuration>
+					<header>${basedir}/doc/license.txt</header>
+					<failIfMissing>true</failIfMissing>
+					<aggregate>true</aggregate>
+					<strictCheck>true</strictCheck>
+					<properties>
+						<!-- <year>2012</year> -->
+					</properties>
+					<mapping>
+						<java>SLASHSTAR_STYLE</java>
+					</mapping>
+					<includes>
+						<include>src/main/java/**/*.java</include>
+					</includes>
+					<encoding>UTF-8</encoding>
+				</configuration>
+				<executions>
+					<execution>
+						<id>check-headers</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
@@ -373,7 +348,6 @@
 				</plugins>
 			</build>
 		</profile>
-
 	</profiles>
 
 	<dependencies>
@@ -587,7 +561,9 @@
 		</dependency>
 
 
-		<!-- test dependences -->
+		<!--
+			test dependences
+		-->
 
 		<dependency>
 			<groupId>org.springframework</groupId>
@@ -602,8 +578,8 @@
 			<scope>test</scope>
 		</dependency>
 
-		<!-- <dependency> <groupId>com.microsoft.sqlserver</groupId> <artifactId>sqljdbc4</artifactId>
-			<version>4.0.2206.100</version> <scope>test</scope> </dependency> -->
+		<!-- <dependency> <groupId>com.microsoft.sqlserver</groupId> <artifactId>sqljdbc4</artifactId> <version>4.0.2206.100</version>
+			<scope>test</scope> </dependency> -->
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
@@ -761,19 +737,4 @@
 		</dependency>
 
 	</dependencies>
-
-	<distributionManagement>
-		<!-- 发布releases -->
-		<repository>
-			<id>ufo-releases</id>
-			<url>http://10.60.80.54:30000/nexus/content/repositories/releases/</url>
-		</repository>
-		<!-- 发布snapshots -->
-		<snapshotRepository>
-			<id>ufo-snapshots</id>
-			<url>http://10.60.80.54:30000/nexus/content/repositories/snapshots/</url>
-			<uniqueVersion>true</uniqueVersion>
-		</snapshotRepository>
-	</distributionManagement>
-
 </project>

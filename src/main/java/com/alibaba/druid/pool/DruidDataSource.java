@@ -408,6 +408,17 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
             }
         }
         {
+            String property = properties.getProperty("druid.keepAliveBetweenTimeMillis");
+            if (property != null && property.length() > 0) {
+                try {
+                    long value = Long.parseLong(property);
+                    this.setKeepAliveBetweenTimeMillis(value);
+                } catch (NumberFormatException e) {
+                    LOG.error("illegal property 'druid.keepAliveBetweenTimeMillis'", e);
+                }
+            }
+        }
+        {
             Boolean value = getBoolean(properties, "druid.poolPreparedStatements");
             if (value != null) {
                 this.setPoolPreparedStatements0(value);
@@ -1354,8 +1365,15 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
                 }
 
                 if (testWhileIdle) {
+                    final DruidConnectionHolder holder = poolableConnection.holder;
                     long currentTimeMillis             = System.currentTimeMillis();
-                    long lastActiveTimeMillis          = poolableConnection.holder.lastActiveTimeMillis;
+                    long lastActiveTimeMillis          = holder.lastActiveTimeMillis;
+                    long lastKeepTimeMillis            = holder.lastKeepTimeMillis;
+
+                    if (lastKeepTimeMillis > lastActiveTimeMillis) {
+                        lastActiveTimeMillis = lastKeepTimeMillis;
+                    }
+
                     long idleMillis                    = currentTimeMillis - lastActiveTimeMillis;
 
                     long timeBetweenEvictionRunsMillis = this.timeBetweenEvictionRunsMillis;
@@ -1679,8 +1697,13 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
 
         if (requireDiscard) {
             if (holder.statementTrace != null) {
-                for (Statement stmt : holder.statementTrace) {
-                    JdbcUtils.close(stmt);
+                holder.lock.lock();
+                try {
+                    for (Statement stmt : holder.statementTrace) {
+                        JdbcUtils.close(stmt);
+                    }
+                } finally {
+                    holder.lock.unlock();
                 }
             }
 
@@ -1858,6 +1881,10 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
      * close datasource
      */
     public void close() {
+        if (LOG.isInfoEnabled()) {
+            LOG.info("{dataSource-" + this.getID() + "} closing ...");
+        }
+
         lock.lock();
         try {
             if (this.closed) {
@@ -1990,7 +2017,7 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
             while (poolingCount == 0) {
                 emptySignal(); // send signal to CreateThread create connection
 
-                if (failFast && failContinuous.get()) {
+                if (failFast && isFailContinuous()) {
                     throw new DataSourceNotAvailableException(createError);
                 }
 
@@ -2030,7 +2057,7 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
             if (poolingCount == 0) {
                 emptySignal(); // send signal to CreateThread create connection
 
-                if (failFast && failContinuous.get()) {
+                if (failFast && isFailContinuous()) {
                     throw new DataSourceNotAvailableException(createError);
                 }
 
@@ -2377,8 +2404,10 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
                     if (emptyWait) {
                         // 必须存在线程等待，才创建连接
                         if (poolingCount >= notEmptyWaitThreadCount //
-                                && !(keepAlive && activeCount + poolingCount < minIdle)
-                                && !initTask) {
+                                && (!(keepAlive && activeCount + poolingCount < minIdle))
+                                && (!initTask)
+                                && !isFailContinuous()
+                        ) {
                             createTaskCount--;
                             return;
                         }
@@ -2541,7 +2570,9 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
                     if (emptyWait) {
                         // 必须存在线程等待，才创建连接
                         if (poolingCount >= notEmptyWaitThreadCount //
-                                && !(keepAlive && activeCount + poolingCount < minIdle)) {
+                                && (!(keepAlive && activeCount + poolingCount < minIdle))
+                                && !isFailContinuous()
+                        ) {
                             empty.await();
                         }
 
@@ -2657,6 +2688,9 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
     }
 
     public class DestroyTask implements Runnable {
+        public DestroyTask() {
+
+        }
 
         @Override
         public void run() {
@@ -2860,15 +2894,23 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
 
                     long idleMillis = currentTimeMillis - connection.lastActiveTimeMillis;
 
-                    if (idleMillis < minEvictableIdleTimeMillis) {
+                    if (idleMillis < minEvictableIdleTimeMillis
+                            && idleMillis < keepAliveBetweenTimeMillis
+                    ) {
                         break;
                     }
 
-                    if (checkTime && i < checkCount) {
-                        evictConnections[evictCount++] = connection;
-                    } else if (idleMillis > maxEvictableIdleTimeMillis) {
-                        evictConnections[evictCount++] = connection;
-                    } else if (keepAlive) {
+                    if (idleMillis >= minEvictableIdleTimeMillis) {
+                        if (checkTime && i < checkCount) {
+                            evictConnections[evictCount++] = connection;
+                            continue;
+                        } else if (idleMillis > maxEvictableIdleTimeMillis) {
+                            evictConnections[evictCount++] = connection;
+                            continue;
+                        }
+                    }
+
+                    if (keepAlive && idleMillis >= keepAliveBetweenTimeMillis) {
                         keepAliveConnections[keepAliveCount++] = connection;
                     }
                 } else {
@@ -2902,7 +2944,6 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
         }
 
         if (keepAliveCount > 0) {
-            this.getDataSourceStat().addKeepAliveCheckCount(keepAliveCount);
             // keep order
             for (int i = keepAliveCount - 1; i >= 0; --i) {
                 DruidConnectionHolder holer = keepAliveConnections[i];
@@ -2922,7 +2963,7 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
 
                 boolean discard = !validate;
                 if (validate) {
-                    holer.lastActiveTimeMillis = System.currentTimeMillis();
+                    holer.lastKeepTimeMillis = System.currentTimeMillis();
                     boolean putOk = put(holer);
                     if (!putOk) {
                         discard = true;
@@ -2948,6 +2989,7 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
                     }
                 }
             }
+            this.getDataSourceStat().addKeepAliveCheckCount(keepAliveCount);
             Arrays.fill(keepAliveConnections, null);
         }
     }
@@ -3124,6 +3166,9 @@ public class DruidDataSource extends DruidAbstractDataSource implements DruidDat
                 map.put("useCount", connHolder.getUseCount());
                 if (connHolder.lastActiveTimeMillis > 0) {
                     map.put("lastActiveTime", new Date(connHolder.lastActiveTimeMillis));
+                }
+                if (connHolder.lastKeepTimeMillis > 0) {
+                    map.put("lastKeepTimeMillis", new Date(connHolder.lastKeepTimeMillis));
                 }
                 map.put("connectTime", new Date(connHolder.getTimeMillis()));
                 map.put("holdability", connHolder.getUnderlyingHoldability());
