@@ -1,5 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.alibaba</groupId>
 	<artifactId>druid</artifactId>
@@ -561,9 +562,7 @@
 		</dependency>
 
 
-		<!--
-			test dependences
-		-->
+		<!-- test dependences -->
 
 		<dependency>
 			<groupId>org.springframework</groupId>
@@ -578,8 +577,8 @@
 			<scope>test</scope>
 		</dependency>
 
-		<!-- <dependency> <groupId>com.microsoft.sqlserver</groupId> <artifactId>sqljdbc4</artifactId> <version>4.0.2206.100</version>
-			<scope>test</scope> </dependency> -->
+		<!-- <dependency> <groupId>com.microsoft.sqlserver</groupId> <artifactId>sqljdbc4</artifactId>
+			<version>4.0.2206.100</version> <scope>test</scope> </dependency> -->
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
@@ -737,4 +736,18 @@
 		</dependency>
 
 	</dependencies>
+
+	<distributionManagement>
+		<!-- 发布releases -->
+		<repository>
+			<id>ufo-releases</id>
+			<url>http://10.60.80.54:30000/nexus/content/repositories/releases/</url>
+		</repository>
+		<!-- 发布snapshots -->
+		<snapshotRepository>
+			<id>ufo-snapshots</id>
+			<url>http://10.60.80.54:30000/nexus/content/repositories/snapshots/</url>
+			<uniqueVersion>true</uniqueVersion>
+		</snapshotRepository>
+	</distributionManagement>
 </project>
